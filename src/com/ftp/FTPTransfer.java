@@ -1,7 +1,9 @@
 package com.ftp;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,24 +14,67 @@ import org.apache.commons.net.ftp.FTPClient;
 public class FTPTransfer {
 
 	public static void main(String[] args) {
-		
-		String server = "www.myserver.com";
-        //int port = 21;
-        String user = "user";
-        String pass = "pass";
+		retrieveFile();
+	}
+	
+	
+	private static void retrieveFile() {
+		String server = "IPAddress";
+        int port = 21;
+        String user = "username";
+        String pass = "password";
  
         FTPClient ftpClient = new FTPClient();
         try {
  
-            //ftpClient.connect(server, port);
-            ftpClient.connect(server);
+            ftpClient.connect(server, port);
+            ftpClient.login(user, pass);
+            ftpClient.enterLocalPassiveMode();
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+ 
+            // using retrieveFile(String, OutputStream)
+            String remoteFile = "/files/test.zip";
+            File downloadFile = new File("C:/files/test");
+            OutputStream outputStream1 = new BufferedOutputStream(new FileOutputStream(downloadFile));
+            boolean success = ftpClient.retrieveFile(remoteFile, outputStream1);
+            outputStream1.close();
+ 
+            if (success) {
+                System.out.println("File has been downloaded successfully.");
+            }
+        } catch (Exception ex) {
+            System.out.println("Error: " + ex.getMessage());
+            ex.printStackTrace();
+        } finally {
+            try {
+                if (ftpClient.isConnected()) {
+                    ftpClient.logout();
+                    ftpClient.disconnect();
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+	}
+	
+	private static void uploadFile() {
+		String server = "IPAddress";
+        int port = 21;
+        String user = "username";
+        String pass = "password";
+ 
+        FTPClient ftpClient = new FTPClient();
+        try {
+ 
+            ftpClient.connect(server, port);
+            //ftpClient.connect(server);
             ftpClient.login(user, pass);
             ftpClient.enterLocalPassiveMode();
  
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
  
-            // APPROACH #1: uploads first file using an InputStream
-            File firstLocalFile = new File("C:/Sateesh/CYR/test.zip");
+            // APPROACH : uploads first file using an InputStream
+            File firstLocalFile = new File("C:/files/test.zip");
  
             String firstRemoteFile = "test.zip";
             InputStream inputStream = new FileInputStream(firstLocalFile);
@@ -38,29 +83,8 @@ public class FTPTransfer {
             boolean done = ftpClient.storeFile(firstRemoteFile, inputStream);
             inputStream.close();
             if (done) {
-                System.out.println("The first file is uploaded successfully.");
+                System.out.println("The file is uploaded successfully.");
             }
- 
-            // APPROACH #2: uploads second file using an OutputStream
-            /*File secondLocalFile = new File("E:/Test/Report.doc");
-            String secondRemoteFile = "test/Report.doc";
-            inputStream = new FileInputStream(secondLocalFile);
- 
-            System.out.println("Start uploading second file");
-            OutputStream outputStream = ftpClient.storeFileStream(secondRemoteFile);
-            byte[] bytesIn = new byte[4096];
-            int read = 0;
- 
-            while ((read = inputStream.read(bytesIn)) != -1) {
-                outputStream.write(bytesIn, 0, read);
-            }
-            inputStream.close();
-            outputStream.close();
- 
-            boolean completed = ftpClient.completePendingCommand();
-            if (completed) {
-                System.out.println("The second file is uploaded successfully.");
-            }*/
  
         } catch (IOException ex) {
             System.out.println("Error: " + ex.getMessage());
